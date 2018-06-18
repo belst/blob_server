@@ -12,6 +12,7 @@ pub struct NewUser {
 }
 
 /// Register a new account
+/// Maybe add location to registration aswell
 pub fn register(
     (user, state): (Json<NewUser>, State<AppState>),
 ) -> impl Future<Item = impl Responder, Error = Error> {
