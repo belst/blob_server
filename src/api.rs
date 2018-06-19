@@ -62,6 +62,7 @@ pub fn addfriend(
         insert into friendship (source, target) values ($1, $2)
         on conflict (greatest(source, target), least(source, target)) do update
         set accepted_at = least(now(), friendship.accepted_at)
+        where friendship.source <> $1
     "#;
     let params = Mutex::new(vec![Box::new(source.username) as Box<ToSql + Send>, Box::new(target.username)]);
 
