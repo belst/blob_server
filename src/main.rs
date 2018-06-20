@@ -21,9 +21,8 @@ extern crate r2d2;
 extern crate r2d2_postgres;
 
 use actix::prelude::*;
-use actix_web::{http::Method, middleware, server, App, HttpRequest, Responder};
+use actix_web::{http::Method, middleware, server, App};
 
-use futures::{future::ok, Future};
 use r2d2_postgres::{PostgresConnectionManager, TlsMode};
 
 mod api;
@@ -33,13 +32,6 @@ mod models;
 
 pub struct AppState {
     pub db: Addr<Syn, db::DbExecutor>,
-}
-
-fn index(
-    req: HttpRequest<AppState>,
-) -> impl Future<Item = impl Responder, Error = actix_web::Error> {
-    let _ = req.state().db;
-    ok("Hello World")
 }
 
 fn main() {
@@ -69,9 +61,15 @@ fn main() {
                 r.middleware(auth::AuthMiddleware);
                 r.method(Method::GET).with_async(api::friends)
             })
-            .resource("/weather", |r| r.method(Method::GET).a(index))
-            .resource("/nearby", |r| r.method(Method::GET).a(index))
-            .resource("/update", |r| r.method(Method::POST).a(index))
+            .resource("/weather", |r| r.method(Method::GET).with_async(api::weather))
+            .resource("/nearby", |r| {
+                r.middleware(auth::AuthMiddleware);
+                r.method(Method::GET).with_async(api::nearby)
+            })
+            .resource("/update", |r| {
+                r.middleware(auth::AuthMiddleware);
+                r.method(Method::POST).with_async(api::update)
+            })
     }).bind("127.0.0.1:8000")
         .unwrap()
         .start();

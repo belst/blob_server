@@ -36,7 +36,6 @@ impl Handler<Query> for DbExecutor {
                 .iter()
                 .map(|p| p.as_ref() as &ToSql)
                 .collect::<Vec<_>>(),
-        )
-        .map_err(From::from)
+        ).map_err(From::from)
     }
 }

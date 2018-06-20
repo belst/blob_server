@@ -1,5 +1,5 @@
 use super::AppState;
-use actix_web::http::{header};
+use actix_web::http::header;
 use actix_web::middleware::{Middleware, Started};
 use actix_web::{HttpMessage, HttpRequest, HttpResponse, Result};
 use db::Query;
@@ -21,7 +21,9 @@ impl Middleware<AppState> for AuthMiddleware {
             if !token.starts_with("Bearer ") {
                 return Err(format_err!("Invalid Authorization Header").into());
             }
-            let token = token[7..].parse::<Uuid>().map_err(|e| -> ::failure::Error { e.into() })?; // needs copy otherwise does not live long enough
+            let token = token[7..]
+                .parse::<Uuid>()
+                .map_err(|e| -> ::failure::Error { e.into() })?; // needs copy otherwise does not live long enough
 
             let query = "update users set last_online = now() where token = $1 returning username, token, last_location, last_online, completion";
             let params = Mutex::new(vec![Box::new(token) as Box<ToSql + Send>]);
@@ -34,17 +36,15 @@ impl Middleware<AppState> for AuthMiddleware {
                 .map_err(From::from)
                 .map(move |rows| {
                     if rows.is_empty() {
-                        return Some(HttpResponse::Unauthorized().json(
-                            json!({
+                        return Some(HttpResponse::Unauthorized().json(json!({
                                 "error": "Token not found"
-                            })
-                        ));
+                            })));
                     }
                     let row = rows.get(0);
                     let u = User {
                         username: row.get(0),
                         token: row.get(1),
-                        last_location: row.get_opt(2).and_then(Result::ok),
+                        last_location: row.get(2),
                         last_online: row.get(3),
                         completion: row.get(4),
                     };
