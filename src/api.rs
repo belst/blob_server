@@ -165,6 +165,7 @@ pub fn nearby(
         from users u1, users u2
         where u2.token = $1
           and ST_DWithin(u1.last_location, u2.last_location, 1000)
+          and u1.last_online + '5 minutes'::interval > now()
         order by ST_Distance(u1.last_location, u2.last_location)
     "#;
     let params = Mutex::new(vec![Box::new(user.token) as Box<ToSql + Send>]);
@@ -195,8 +196,9 @@ pub fn update(
 
     let query = r#"
         update users set
-        last_location = $1,
-        completion = $2
+            last_location = $1,
+            completion = $2
+            last_online = now()
         where token = $3;
     "#;
     let params = Mutex::new(vec![
