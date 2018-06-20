@@ -154,10 +154,11 @@ pub fn friends(
 pub fn weather(loc: Q<Loc>) -> impl Future<Item = impl Responder, Error = Error> {
     let api = ::std::env::var("OWA_API_KEY").expect("No Weather API Key set");
 
-    client::ClientRequest::get(format!(
-        "https://api.openweathermap.org/data/2.5/weather?lat={}&lon={}&APPID={}",
+    let url = format!(
+        "https://api.openweathermap.org/data/2.5/weather?lat={:?}&lon={:?}&APPID={}",
         loc.lat, loc.lon, api
-    )).finish()
+    );
+    client::ClientRequest::get(url).finish()
         .unwrap()
         .send()
         .map_err(From::from)

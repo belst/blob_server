@@ -70,7 +70,7 @@ fn main() {
                 r.middleware(auth::AuthMiddleware);
                 r.method(Method::POST).with_async(api::update)
             })
-    }).bind("127.0.0.1:8000")
+    }).bind("0.0.0.0:8000")
         .unwrap()
         .start();
 
