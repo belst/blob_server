@@ -6,7 +6,6 @@ use db::Query;
 use futures::{future::result, Future};
 use models::User;
 use postgres::types::ToSql;
-use std::sync::Mutex;
 use uuid::Uuid;
 
 pub struct AuthMiddleware;
@@ -26,7 +25,7 @@ impl Middleware<AppState> for AuthMiddleware {
                 .map_err(|e| -> ::failure::Error { e.into() })?; // needs copy otherwise does not live long enough
 
             let query = "update users set last_online = now() where token = $1 returning username, token, last_location, last_online, completion";
-            let params = Mutex::new(vec![Box::new(token) as Box<ToSql + Send>]);
+            let params = vec![Box::new(token) as Box<ToSql + Send>];
             let mut req = req.clone();
             let future = req.state()
                 .db

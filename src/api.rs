@@ -7,7 +7,6 @@ use futures::{future::{err, result},
 use models::{Friendship, Nearby, User};
 use postgis::ewkb::Point;
 use postgres::types::ToSql;
-use std::sync::Mutex;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct NewUser {
@@ -38,10 +37,10 @@ pub fn register(
     }
     let pos = user.loc.unwrap();
     let query = "INSERT INTO users (username, last_location) VALUES ($1, $2) RETURNING username, token, last_location, last_online, completion";
-    let params = Mutex::new(vec![
+    let params = vec![
         Box::new(user.username) as Box<ToSql + Send>,
         Box::new(Point::new(pos.lon, pos.lat, None)),
-    ]);
+    ];
     Box::new(
         state
             .db
@@ -88,10 +87,10 @@ pub fn addfriend(
         set accepted_at = least(now(), friendship.accepted_at)
         where friendship.source <> $1
     "#;
-    let params = Mutex::new(vec![
+    let params = vec![
         Box::new(source.username) as Box<ToSql + Send>,
         Box::new(target.username),
-    ]);
+    ];
 
     state
         .db
@@ -129,7 +128,7 @@ pub fn friends(
           and u2.username = f.target
 
     "#;
-    let params = Mutex::new(vec![Box::new(user.username) as Box<ToSql + Send>]);
+    let params = vec![Box::new(user.username) as Box<ToSql + Send>];
 
     state
         .db
@@ -183,7 +182,7 @@ pub fn nearby(
           and u1.last_online + '5 minutes'::interval > now()
         order by ST_Distance(u1.last_location, u2.last_location)
     "#;
-    let params = Mutex::new(vec![Box::new(user.token) as Box<ToSql + Send>]);
+    let params = vec![Box::new(user.token) as Box<ToSql + Send>];
 
     state
         .db
@@ -216,11 +215,11 @@ pub fn update(
             last_online = now()
         where token = $3;
     "#;
-    let params = Mutex::new(vec![
+    let params = vec![
         Box::new(Point::new(upd.loc.lon, upd.loc.lat, None)) as Box<ToSql + Send>,
         Box::new(upd.completion),
         Box::new(user.token),
-    ]);
+    ];
     state
         .db
         .send(Query { query, params })

@@ -3,7 +3,6 @@ use failure::Error;
 use postgres::{rows::Rows, types::ToSql};
 use r2d2::{self, PooledConnection};
 use r2d2_postgres::PostgresConnectionManager;
-use std::sync::Mutex;
 
 pub type Pool = r2d2::Pool<PostgresConnectionManager>;
 pub type Connection = PooledConnection<PostgresConnectionManager>;
@@ -13,7 +12,7 @@ pub struct DbExecutor(pub Pool);
 
 pub struct Query {
     pub query: &'static str,
-    pub params: Mutex<Vec<Box<ToSql + Send>>>,
+    pub params: Vec<Box<ToSql + Send>>,
 }
 
 impl Message for Query {
@@ -29,10 +28,9 @@ impl Handler<Query> for DbExecutor {
 
     fn handle(&mut self, msg: Query, _: &mut Self::Context) -> Self::Result {
         let conn: Connection = self.0.get()?;
-        let params = &*msg.params.lock().unwrap();
         conn.query(
             msg.query,
-            &params
+            &msg.params
                 .iter()
                 .map(|p| p.as_ref() as &ToSql)
                 .collect::<Vec<_>>(),
