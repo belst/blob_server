@@ -115,7 +115,7 @@ pub fn friends(
         select
             f.source source,
             f.target target,
-            f.accepted_at accepted_at
+            f.accepted_at accepted_at,
             u1.last_online source_last_online,
             u2.last_online target_last_online
         from
@@ -175,12 +175,13 @@ pub fn nearby(
 ) -> impl Future<Item = impl Responder, Error = Error> {
     let user = req.extensions_mut().remove::<User>().unwrap();
     let query = r#"
-        select u1.username, u1.last_location, u1.last_online
+        select ST_Distance(u1.last_location, u2.last_location) distance, u1.username, u1.last_location, u1.last_online
         from users u1, users u2
         where u2.token = $1
           and ST_DWithin(u1.last_location, u2.last_location, 1000)
           and u1.last_online + '5 minutes'::interval > now()
-        order by ST_Distance(u1.last_location, u2.last_location)
+          and u1.username <> u2.username
+        order by distance
     "#;
     let params = vec![Box::new(user.token) as Box<ToSql + Send>];
 
@@ -193,9 +194,10 @@ pub fn nearby(
         .map(|rows| {
             rows.into_iter()
                 .map(|row| Nearby {
-                    username: row.get(0),
-                    last_location: row.get(1),
-                    last_online: row.get(2),
+                    distance: row.get(0),
+                    username: row.get(1),
+                    last_location: row.get(2),
+                    last_online: row.get(3),
                 })
                 .collect::<Vec<_>>()
         })
@@ -211,7 +213,7 @@ pub fn update(
     let query = r#"
         update users set
             last_location = $1,
-            completion = $2
+            completion = $2,
             last_online = now()
         where token = $3;
     "#;

@@ -42,5 +42,6 @@ pub struct Nearby {
     pub username: Username,
     #[serde(serialize_with = "ser_point")]
     pub last_location: ewkb::Point,
+    pub distance: f64,
     pub last_online: DateTime<Utc>,
 }
