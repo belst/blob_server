@@ -1,6 +1,6 @@
 use super::AppState;
-use actix_web::{client, Error, HttpMessage, HttpRequest, HttpResponse, Json,
-                Query as Q, Responder, State};
+use actix_web::{client, Error, HttpMessage, HttpRequest, HttpResponse, Json, Query as Q,
+                Responder, State};
 use db::Query;
 use futures::{future::{err, result},
               Future};
