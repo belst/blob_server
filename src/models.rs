@@ -33,6 +33,8 @@ pub struct Friendship {
     pub source: Username,
     pub target: Username,
     pub accepted: Option<DateTime<Utc>>,
+    pub source_last_online: DateTime<Utc>,
+    pub target_last_online: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Serialize)]

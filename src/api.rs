@@ -113,9 +113,21 @@ pub fn friends(
     let user = req.extensions_mut().remove::<User>().unwrap();
 
     let query = r#"
-        select source, target, accepted_at from friendship
-        where source = $1
-           or target = $1
+        select
+            f.source source,
+            f.target target,
+            f.accepted_at accepted_at
+            u1.last_online source_last_online,
+            u2.last_online target_last_online
+        from
+            friendship f,
+            users u1,
+            users u2
+        where (f.source = $1
+           or f.target = $1)
+          and u1.username = f.source
+          and u2.username = f.target
+
     "#;
     let params = Mutex::new(vec![Box::new(user.username) as Box<ToSql + Send>]);
 
@@ -130,6 +142,8 @@ pub fn friends(
                     source: row.get(0),
                     target: row.get(1),
                     accepted: row.get_opt(2).and_then(Result::ok),
+                    source_last_online: row.get(3),
+                    target_last_online: row.get(4),
                 })
                 .collect::<Vec<_>>()
         })
